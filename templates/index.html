@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>FedHealth — Medical Risk Predictor</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,300;0,400;0,700;0,900;1,300;1,400&display=swap" rel="stylesheet"/>
+<style>
+/* ══ TOKENS ══════════════════════════════════════════════════ */
+:root {
+  --bg:          #f0f4fa;
+  --bg-page:     #e8edf5;
+  --surface:     #ffffff;
+  --surface-2:   #f7f9fc;
+  --border:      #dde4f0;
+  --border-soft: #edf0f7;
+  --navy:        #1a3566;
+  --blue:        #2563eb;
+  --blue-light:  #dbeafe;
+  --blue-mid:    #93c5fd;
+  --sky:         #0ea5e9;
+  --text:        #0f172a;
+  --text-sub:    #475569;
+  --text-dim:    #94a3b8;
+  --green:       #059669;
+  --green-bg:    #d1fae5;
+  --amber:       #d97706;
+  --amber-bg:    #fef3c7;
+  --red:         #dc2626;
+  --red-bg:      #fee2e2;
+  --shadow-sm:   0 1px 6px rgba(15,23,42,.07),0 4px 20px rgba(15,23,42,.05);
+  --shadow-md:   0 6px 28px rgba(15,23,42,.11),0 2px 8px rgba(15,23,42,.07);
+  --radius:      14px;
+  --radius-sm:   10px;
+  --radius-lg:   20px;
+  --font-h:      'Merriweather','Times New Roman',Georgia,serif;
+  --font-b:      'Times New Roman',Times,Georgia,serif;
+  --ease:        cubic-bezier(.4,0,.2,1);
+}
+
+[data-theme="dark"] {
+  --bg:          #07111e;
+  --bg-page:     #040d18;
+  --surface:     #0d1d30;
+  --surface-2:   #112338;
+  --border:      rgba(255,255,255,.09);
+  --border-soft: rgba(255,255,255,.05);
+  --navy:        #4a7fd4;
+  --blue:        #3b82f6;
+  --blue-light:  rgba(59,130,246,.13);
+  --blue-mid:    rgba(59,130,246,.4);
+  --text:        #e2eaf5;
+  --text-sub:    #8facc8;
+  --text-dim:    #4a6380;
+  --green:       #34d399;
+  --green-bg:    rgba(52,211,153,.13);
+  --amber:       #fbbf24;
+  --amber-bg:    rgba(251,191,36,.13);
+  --red:         #f87171;
+  --red-bg:      rgba(248,113,113,.13);
+  --shadow-sm:   0 1px 6px rgba(0,0,0,.35),0 4px 20px rgba(0,0,0,.25);
+  --shadow-md:   0 6px 28px rgba(0,0,0,.45),0 2px 8px rgba(0,0,0,.3);
+}
+
+/* ══ BASE ════════════════════════════════════════════════════ */
+*,*::before,*::after { box-sizing:border-box; margin:0; padding:0 }
+html { scroll-behavior:smooth; font-size:17px }
+body {
+  font-family: var(--font-b);
+  background: var(--bg-page);
+  color: var(--text);
+  min-height: 100vh;
+  line-height: 1.72;
+  transition: background .3s var(--ease), color .3s var(--ease);
+}
+
+/* ══ HEADER ══════════════════════════════════════════════════ */
+header {
+  position: sticky; top: 0; z-index: 100;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  box-shadow: var(--shadow-sm);
+  transition: background .3s var(--ease), border-color .3s var(--ease);
+}
+.header-inner {
+  max-width: 1120px; margin: 0 auto; padding: 0 32px;
+  height: 72px; display: flex; align-items: center;
+  justify-content: space-between; gap: 16px;
+}
+.logo { display:flex; align-items:center; gap:14px; text-decoration:none }
+.logo-mark {
+  width: 46px; height: 46px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  border-radius: 13px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 22px; flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(37,99,235,.38);
+}
+.logo-text {
+  font-family: var(--font-h); font-size: 1.15rem; font-weight: 700;
+  color: var(--navy); line-height: 1.15; transition: color .3s var(--ease);
+}
+.logo-sub {
+  font-size: .68rem; font-family: var(--font-h); letter-spacing: .08em;
+  text-transform: uppercase; color: var(--text-dim); display: block;
+  font-weight: 400; margin-top: 2px; transition: color .3s var(--ease);
+}
+.header-right { display:flex; align-items:center; gap:12px }
+
+.srv-pill {
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 5px 14px; border-radius: 20px;
+  font-family: var(--font-h); font-size: .68rem; font-weight: 700;
+  letter-spacing: .05em; text-transform: uppercase;
+  white-space: nowrap; cursor: default;
+  transition: background .3s, border-color .3s, color .3s;
+}
+.srv-pill.checking { background:var(--surface-2); border:1px solid var(--border);   color:var(--text-dim) }
+.srv-pill.online   { background:var(--green-bg);  border:1px solid rgba(5,150,105,.28); color:var(--green) }
+.srv-pill.offline  { background:var(--red-bg);    border:1px solid rgba(220,38,38,.28); color:var(--red)   }
+.srv-pill.warning  { background:var(--amber-bg);  border:1px solid rgba(217,119,6,.28); color:var(--amber) }
+.srv-dot { width:7px; height:7px; border-radius:50%; background:currentColor }
+.srv-dot.pulse { animation: blink 2.2s ease-in-out infinite }
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:.35} }
+
+.theme-btn {
+  width: 44px; height: 44px; border-radius: 12px;
+  border: 1px solid var(--border); background: var(--surface-2);
+  color: var(--text-sub); cursor: pointer;
+  display: flex; align-items: center; justify-content: center; font-size: 18px;
+  transition: all .2s var(--ease); flex-shrink: 0;
+}
+.theme-btn:hover { border-color:var(--blue); color:var(--blue); background:var(--blue-light) }
+
+/* ══ PAGE ════════════════════════════════════════════════════ */
+.page { max-width: 1120px; margin: 0 auto; padding: 48px 32px 96px }
+
+/* ══ HERO ════════════════════════════════════════════════════ */
+.hero {
+  text-align: center; padding: 36px 0 48px;
+  animation: fade-up .5s var(--ease) both;
+}
+@keyframes fade-up {
+  from { opacity:0; transform:translateY(16px) }
+  to   { opacity:1; transform:translateY(0)    }
+}
+.hero h1 {
+  font-family: var(--font-h); font-size: clamp(1.9rem, 4vw, 2.6rem);
+  font-weight: 900; color: var(--navy); line-height: 1.22;
+  margin-bottom: 16px; transition: color .3s var(--ease);
+}
+.hero h1 em { font-style: normal; color: var(--blue) }
+.hero p {
+  font-size: 1.05rem; color: var(--text-sub);
+  max-width: 560px; margin: 0 auto; line-height: 1.8;
+  transition: color .3s var(--ease);
+}
+
+/* ══ SERVER BANNER ═══════════════════════════════════════════ */
+#server-banner { display:none }
+.server-banner-inner {
+  display: flex; gap: 16px; align-items: flex-start;
+  padding: 18px 22px; border-radius: var(--radius);
+  margin-bottom: 28px; font-size: .9rem; line-height: 1.65;
+}
+.server-banner-inner.offline { background:var(--red-bg);   border:1px solid rgba(220,38,38,.2);  color:var(--red)   }
+.server-banner-inner.warning { background:var(--amber-bg); border:1px solid rgba(217,119,6,.2);  color:var(--amber) }
+.sb-icon { font-size: 22px; flex-shrink:0; margin-top:2px }
+.sb-body strong { display:block; font-family:var(--font-h); font-size:.8rem; font-weight:700; letter-spacing:.04em; margin-bottom:5px }
+.sb-body code { font-family:'Courier New',monospace; font-size:.82rem; background:rgba(0,0,0,.1); padding:2px 7px; border-radius:4px }
+
+/* ══ SECTION CARDS ════════════════════════════════════════════ */
+.section-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  margin-bottom: 24px; overflow: hidden;
+  transition: background .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+  animation: fade-up .5s var(--ease) both;
+}
+.section-card:nth-child(1){animation-delay:.05s}
+.section-card:nth-child(2){animation-delay:.10s}
+.section-card:nth-child(3){animation-delay:.15s}
+.section-card:nth-child(4){animation-delay:.20s}
+.section-card:hover { box-shadow: var(--shadow-md) }
+
+.card-header {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 28px; border-bottom: 1px solid var(--border-soft);
+  background: var(--surface-2);
+  transition: background .3s var(--ease), border-color .3s var(--ease);
+}
+.card-icon {
+  width: 42px; height: 42px; border-radius: 12px;
+  background: var(--blue-light);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 19px; flex-shrink: 0;
+  transition: background .3s var(--ease);
+}
+.card-header h2 {
+  font-family: var(--font-h); font-size: .82rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--navy);
+  transition: color .3s var(--ease);
+}
+.card-header p { font-size: .76rem; color: var(--text-dim); margin-top: 2px; transition: color .3s var(--ease) }
+
+/* ══ FORM GRID ═══════════════════════════════════════════════ */
+.form-grid {
+  padding: 26px 28px;
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 22px;
+}
+.field { display: flex; flex-direction: column; gap: 8px }
+
+.field label {
+  font-family: var(--font-h); font-size: .7rem; font-weight: 700;
+  letter-spacing: .07em; text-transform: uppercase; color: var(--text-sub);
+  display: flex; align-items: baseline; gap: 5px;
+  transition: color .3s var(--ease);
+}
+.field label .unit {
+  font-weight: 400; font-family: var(--font-b); font-size: .73rem;
+  text-transform: none; letter-spacing: 0; color: var(--text-dim);
+}
+.field input, .field select {
+  height: 48px; padding: 0 14px;
+  background: var(--surface-2); border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm); color: var(--text);
+  font-family: var(--font-b); font-size: .98rem;
+  transition: border-color .18s var(--ease), box-shadow .18s var(--ease),
+              background .3s var(--ease), color .3s var(--ease);
+  width: 100%; appearance: none; -webkit-appearance: none;
+}
+.field select {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='11' height='7'%3E%3Cpath d='M1 1l4.5 4.5L10 1' stroke='%2394a3b8' stroke-width='1.6' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 14px center;
+  padding-right: 36px; cursor: pointer;
+}
+.field input:focus, .field select:focus {
+  outline: none; border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.12); background: var(--surface);
+}
+.field input::placeholder { color: var(--text-dim) }
+
+/* ══ CONDITIONS ═══════════════════════════════════════════════ */
+.conditions-grid {
+  display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: 12px; padding: 22px 28px;
+}
+.cbox { position: relative; cursor: pointer }
+.cbox input { position:absolute; opacity:0; width:0; height:0 }
+.cbox-inner {
+  display: flex; align-items: center; gap: 14px;
+  padding: 14px 16px; border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  transition: all .18s var(--ease); background: var(--surface-2);
+}
+.cbox:hover .cbox-inner { border-color:var(--blue); background:var(--blue-light) }
+.cbox input:checked + .cbox-inner {
+  border-color: var(--blue); background: var(--blue-light);
+  box-shadow: 0 0 0 4px rgba(37,99,235,.10);
+}
+.cbox-tick {
+  width: 22px; height: 22px; border: 1.5px solid var(--border);
+  border-radius: 6px; background: var(--surface);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; color: transparent; flex-shrink: 0;
+  transition: all .18s var(--ease);
+}
+.cbox input:checked + .cbox-inner .cbox-tick { background:var(--blue); border-color:var(--blue); color:#fff }
+.cbox-label strong {
+  display: block; font-family: var(--font-h); font-size: .8rem;
+  font-weight: 700; color: var(--text); line-height: 1.25;
+  transition: color .3s var(--ease);
+}
+.cbox-label span { font-size: .72rem; color: var(--text-dim); transition: color .3s var(--ease) }
+
+/* ══ PREDICT ══════════════════════════════════════════════════ */
+.predict-wrap {
+  padding: 26px 28px; display: flex; align-items: center; gap: 22px;
+  border-top: 1px solid var(--border-soft); flex-wrap: wrap;
+  transition: border-color .3s var(--ease);
+}
+.predict-btn {
+  display: inline-flex; align-items: center; gap: 11px;
+  background: linear-gradient(135deg, var(--navy), var(--blue)); color: #fff;
+  border: none; border-radius: 12px; padding: 15px 38px;
+  font-family: var(--font-h); font-size: .86rem; font-weight: 700;
+  letter-spacing: .06em; text-transform: uppercase; cursor: pointer;
+  box-shadow: 0 5px 18px rgba(37,99,235,.32);
+  transition: transform .18s var(--ease), box-shadow .18s var(--ease), opacity .18s;
+}
+.predict-btn:hover { transform:translateY(-2px); box-shadow:0 8px 26px rgba(37,99,235,.42) }
+.predict-btn:active { transform:translateY(0) }
+.predict-btn:disabled { opacity:.5; cursor:not-allowed; transform:none }
+.btn-spinner {
+  display: none; width: 18px; height: 18px;
+  border: 2px solid rgba(255,255,255,.3); border-top-color: #fff;
+  border-radius: 50%; animation: spin .65s linear infinite;
+}
+.predict-btn.loading .btn-text   { display: none }
+.predict-btn.loading .btn-spinner { display: block }
+@keyframes spin { to { transform:rotate(360deg) } }
+
+.predict-note {
+  display: flex; align-items: center; gap: 8px;
+  font-size: .8rem; color: var(--text-dim); font-style: italic;
+  transition: color .3s var(--ease);
+}
+
+/* ══ ERROR ════════════════════════════════════════════════════ */
+.error-msg {
+  display: none; margin: 0 28px 22px; padding: 14px 18px;
+  background: var(--red-bg); border: 1px solid rgba(220,38,38,.25);
+  border-radius: var(--radius-sm); color: var(--red); font-size: .88rem;
+  line-height: 1.65; transition: background .3s var(--ease);
+}
+
+/* ══ RESULTS ══════════════════════════════════════════════════ */
+#results-section { display: none; margin-top: 40px }
+
+.results-heading {
+  display: flex; align-items: center; gap: 14px; margin-bottom: 24px;
+}
+.results-heading h2 {
+  font-family: var(--font-h); font-size: 1.2rem; font-weight: 900;
+  color: var(--navy); transition: color .3s var(--ease);
+}
+.results-heading::after { content:''; flex:1; height:1px; background:linear-gradient(to right,var(--border),transparent) }
+.result-divider-icon {
+  width: 36px; height: 36px;
+  background: linear-gradient(135deg, var(--navy), var(--blue));
+  border-radius: 10px; display:flex; align-items:center; justify-content:center;
+  font-size: 16px; flex-shrink: 0;
+}
+
+.results-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.result-card {
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-lg); padding: 28px; box-shadow: var(--shadow-sm);
+  position: relative; overflow: hidden;
+  transition: background .3s var(--ease), border-color .3s var(--ease);
+  animation: card-in .44s cubic-bezier(.34,1.44,.64,1) both;
+}
+.result-card:nth-child(1){animation-delay:.00s}
+.result-card:nth-child(2){animation-delay:.08s}
+.result-card:nth-child(3){animation-delay:.16s}
+@keyframes card-in {
+  from { opacity:0; transform:translateY(20px) scale(.97) }
+  to   { opacity:1; transform:translateY(0)    scale(1)   }
+}
+.result-card::before {
+  content:''; position:absolute; top:0; left:0; right:0; height:5px;
+  border-radius: var(--radius-lg) var(--radius-lg) 0 0;
+}
+.result-card::after {
+  content: attr(data-symbol); position:absolute; bottom:-6px; right:12px;
+  font-size:64px; opacity:.04; pointer-events:none; line-height:1;
+}
+.rc-cost::before  { background: linear-gradient(to right, #1a3566, #2563eb) }
+.rc-risk::before  { background: linear-gradient(to right, #d97706, #f59e0b) }
+.rc-hi::before    { background: linear-gradient(to right, #dc2626, #f87171) }
+.rc-lo::before    { background: linear-gradient(to right, #059669, #34d399) }
+
+.rc-label {
+  font-family: var(--font-h); font-size: .68rem; font-weight: 700;
+  letter-spacing: .1em; text-transform: uppercase; color: var(--text-dim);
+  margin-bottom: 14px; transition: color .3s var(--ease);
+}
+.rc-value {
+  font-family: var(--font-h); font-size: 2.1rem; font-weight: 900;
+  line-height: 1; margin-bottom: 6px; transition: color .3s var(--ease);
+}
+.rc-cost .rc-value { color: var(--navy) }
+.rc-risk .rc-value { color: var(--amber) }
+.rc-hi   .rc-value { color: var(--red) }
+.rc-lo   .rc-value { color: var(--green) }
+.rc-sub {
+  font-size: .78rem; color: var(--text-dim); line-height: 1.5;
+  transition: color .3s var(--ease);
+}
+
+.risk-bar-track {
+  margin-top: 18px; height: 7px;
+  background: var(--border-soft); border-radius: 4px; overflow: hidden;
+  transition: background .3s var(--ease);
+}
+.risk-bar-fill {
+  height: 100%; border-radius: 4px;
+  background: linear-gradient(to right, var(--green), #f59e0b, var(--red));
+  transition: width 1.2s cubic-bezier(.4,0,.2,1); width: 0%;
+}
+.risk-ticks {
+  display: flex; justify-content: space-between; margin-top: 6px;
+  font-size: .65rem; color: var(--text-dim); font-family: var(--font-h);
+  transition: color .3s var(--ease);
+}
+.hr-badge {
+  display: inline-flex; align-items: center; gap: 8px; margin-top: 16px;
+  padding: 8px 16px; border-radius: 20px;
+  font-family: var(--font-h); font-size: .75rem; font-weight: 700;
+  letter-spacing: .04em; transition: background .3s var(--ease);
+}
+.hr-badge-high { background:var(--red-bg);   border:1px solid rgba(220,38,38,.22); color:var(--red)   }
+.hr-badge-low  { background:var(--green-bg); border:1px solid rgba(5,150,105,.22); color:var(--green) }
+
+/* ══ PRIVACY NOTE ════════════════════════════════════════════ */
+.privacy-note {
+  margin-top: 56px; display:flex; gap:16px; align-items:flex-start;
+  padding: 22px 26px; background:var(--surface); border:1px solid var(--border);
+  border-radius: var(--radius); box-shadow: var(--shadow-sm);
+  transition: background .3s var(--ease), border-color .3s var(--ease);
+}
+.pn-icon { font-size:22px; margin-top:2px; flex-shrink:0 }
+.pn-body h4 {
+  font-family:var(--font-h); font-size:.74rem; font-weight:700;
+  letter-spacing:.07em; text-transform:uppercase; color:var(--navy);
+  margin-bottom:6px; transition:color .3s var(--ease);
+}
+.pn-body p {
+  font-size:.82rem; color:var(--text-sub); line-height:1.8;
+  max-width:700px; transition:color .3s var(--ease);
+}
+
+/* ══ SCROLLBAR ════════════════════════════════════════════════ */
+::-webkit-scrollbar { width:6px }
+::-webkit-scrollbar-track { background:transparent }
+::-webkit-scrollbar-thumb { background:var(--border); border-radius:3px }
+
+/* ══ RESPONSIVE ═══════════════════════════════════════════════ */
+@media(max-width:720px) {
+  .page { padding:28px 18px 72px }
+  .header-inner { padding:0 18px }
+  .form-grid { grid-template-columns:1fr }
+  .results-grid { grid-template-columns:1fr }
+  .conditions-grid { grid-template-columns:1fr 1fr }
+  .hero h1 { font-size:1.6rem }
+  .predict-wrap { flex-direction:column; align-items:flex-start }
+}
+@media(max-width:480px){
+  .conditions-grid { grid-template-columns:1fr }
+}
+</style>
+</head>
+<body>
+
+<!-- ═══ HEADER ═══════════════════════════════════════════════ -->
+<header>
+  <div class="header-inner">
+    <a href="/" class="logo">
+      <div class="logo-mark">⚕</div>
+      <div>
+        <div class="logo-text">FedHealth Analytics</div>
+        <span class="logo-sub">Medical Risk Predictor</span>
+      </div>
+    </a>
+    <div class="header-right">
+      <div class="srv-pill checking" id="srv-pill">
+        <span class="srv-dot" id="srv-dot"></span>
+        <span id="srv-label">Connecting…</span>
+      </div>
+      <button class="theme-btn" id="theme-btn" title="Toggle dark mode">🌙</button>
+    </div>
+  </div>
+</header>
+
+<!-- ═══ MAIN ══════════════════════════════════════════════════ -->
+<main class="page">
+
+  <div class="hero">
+    <h1>Predict Healthcare <em>Risk &amp; Cost</em></h1>
+    <p>Enter patient information below to receive an instant prediction of annual medical cost and risk classification — processed privately with no data stored or shared.</p>
+  </div>
+
+  <div id="server-banner"></div>
+
+  <!-- ── DEMOGRAPHICS ── -->
+  <div class="section-card">
+    <div class="card-header">
+      <div class="card-icon">👤</div>
+      <div><h2>Demographics</h2><p>Age, gender, region &amp; income</p></div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Age <span class="unit">(years)</span></label>
+        <input type="number" id="age" min="0" max="120" step="1" value="35" placeholder="e.g. 42"/>
+      </div>
+      <div class="field">
+        <label>Gender</label>
+        <select id="gender">
+          <option value="Male">Male</option>
+          <option value="Female">Female</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Region</label>
+        <select id="area">
+          <option value="Urban">Urban</option>
+          <option value="Suburban">Suburban</option>
+          <option value="Rural">Rural</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Annual Income <span class="unit">(USD)</span></label>
+        <input type="number" id="income" min="0" step="1000" value="55000" placeholder="e.g. 55000"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CLINICAL ── -->
+  <div class="section-card">
+    <div class="card-header">
+      <div class="card-icon">🩺</div>
+      <div><h2>Clinical Markers</h2><p>Biometric &amp; laboratory values</p></div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>BMI <span class="unit">(kg/m²)</span></label>
+        <input type="number" id="bmi" min="10" max="70" step="0.1" value="25.0" placeholder="e.g. 27.4"/>
+      </div>
+      <div class="field">
+        <label>Blood Pressure <span class="unit">(systolic mmHg)</span></label>
+        <input type="number" id="blood_pressure" min="60" max="220" step="1" value="120" placeholder="e.g. 130"/>
+      </div>
+      <div class="field">
+        <label>LDL Cholesterol <span class="unit">(mg/dL)</span></label>
+        <input type="number" id="ldl" min="0" max="400" step="1" value="100" placeholder="e.g. 110"/>
+      </div>
+      <div class="field">
+        <label>HbA1c <span class="unit">(%)</span></label>
+        <input type="number" id="hbalc" min="3" max="15" step="0.1" value="5.5" placeholder="e.g. 6.2"/>
+      </div>
+      <div class="field">
+        <label>Chronic Conditions Count</label>
+        <input type="number" id="chronic_count" min="0" max="20" step="1" value="0" placeholder="e.g. 2"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── LIFESTYLE & INSURANCE ── -->
+  <div class="section-card">
+    <div class="card-header">
+      <div class="card-icon">📋</div>
+      <div><h2>Lifestyle &amp; Insurance</h2><p>Behavioural factors &amp; coverage details</p></div>
+    </div>
+    <div class="form-grid">
+      <div class="field">
+        <label>Smoking Status</label>
+        <select id="smoker">
+          <option value="Never">Never smoked</option>
+          <option value="Former">Former smoker</option>
+          <option value="Current">Current smoker</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Physical Activity</label>
+        <select id="physical_activity_level">
+          <option value="Sedentary">Sedentary</option>
+          <option value="Low">Low</option>
+          <option value="Moderate" selected>Moderate</option>
+          <option value="Active">Active</option>
+          <option value="Very Active">Very Active</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Network Tier</label>
+        <select id="network_tier">
+          <option value="Silver">Silver</option>
+          <option value="Gold">Gold</option>
+          <option value="Platinum">Platinum</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Annual Premium <span class="unit">(USD)</span></label>
+        <input type="number" id="annual_premium" min="0" step="100" value="5000" placeholder="e.g. 5000"/>
+      </div>
+      <div class="field">
+        <label>Monthly Premium <span class="unit">(USD)</span></label>
+        <input type="number" id="monthly_premium" min="0" step="10" value="420" placeholder="e.g. 420"/>
+      </div>
+      <div class="field">
+        <label>Deductible <span class="unit">(USD)</span></label>
+        <input type="number" id="deductible" min="0" step="100" value="1000" placeholder="e.g. 1500"/>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── CONDITIONS ── -->
+  <div class="section-card">
+    <div class="card-header">
+      <div class="card-icon">🫀</div>
+      <div><h2>Comorbidities &amp; Conditions</h2><p>Select all that apply</p></div>
+    </div>
+    <div class="conditions-grid">
+      <label class="cbox"><input type="checkbox" id="diabetes"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>Diabetes</strong><span>Diagnosed</span></div></div>
+      </label>
+      <label class="cbox"><input type="checkbox" id="hypertension"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>Hypertension</strong><span>High blood pressure</span></div></div>
+      </label>
+      <label class="cbox"><input type="checkbox" id="copd"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>COPD</strong><span>Chronic pulmonary</span></div></div>
+      </label>
+      <label class="cbox"><input type="checkbox" id="asthma"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>Asthma</strong><span>Respiratory</span></div></div>
+      </label>
+      <label class="cbox"><input type="checkbox" id="arthritis"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>Arthritis</strong><span>Joint condition</span></div></div>
+      </label>
+      <label class="cbox"><input type="checkbox" id="mental_health"/>
+        <div class="cbox-inner"><div class="cbox-tick">✓</div><div class="cbox-label"><strong>Mental Health</strong><span>Diagnosed condition</span></div></div>
+      </label>
+    </div>
+
+    <div class="predict-wrap">
+      <button class="predict-btn" id="predict-btn" onclick="runPrediction()">
+        <div class="btn-spinner"></div>
+        <span class="btn-text">Run Prediction</span>
+      </button>
+      <p class="predict-note">🔒 Data is processed in-memory only — nothing is stored or logged.</p>
+    </div>
+    <div class="error-msg" id="error-msg"></div>
+  </div>
+
+  <!-- ── RESULTS ── -->
+  <section id="results-section">
+    <div class="results-heading">
+      <div class="result-divider-icon">📊</div>
+      <h2>Prediction Results</h2>
+    </div>
+    <div class="results-grid">
+      <div class="result-card rc-cost" data-symbol="$">
+        <div class="rc-label">Annual Medical Cost</div>
+        <div class="rc-value" id="res-cost">—</div>
+        <div class="rc-sub">Estimated annual expenditure (USD)</div>
+      </div>
+      <div class="result-card rc-risk" data-symbol="⚡">
+        <div class="rc-label">Risk Score</div>
+        <div class="rc-value" id="res-risk">—</div>
+        <div class="rc-sub">Normalised patient risk index (0–1)</div>
+        <div class="risk-bar-track"><div class="risk-bar-fill" id="risk-bar"></div></div>
+        <div class="risk-ticks"><span>Low</span><span>Moderate</span><span>High</span></div>
+      </div>
+      <div class="result-card" id="rc-hi-card" data-symbol="🫀">
+        <div class="rc-label">High-Risk Classification</div>
+        <div class="rc-value" id="res-hi">—</div>
+        <div class="rc-sub" id="res-hi-prob">Ensemble probability</div>
+        <div id="res-hi-badge"></div>
+      </div>
+    </div>
+  </section>
+
+  <div class="privacy-note">
+    <div class="pn-icon">🛡</div>
+    <div class="pn-body">
+      <h4>Privacy-Preserving by Design</h4>
+      <p>Patient data is processed in-memory by the ensemble model and immediately discarded. No records are stored, no logs are written, and no data is shared with any third party.</p>
+    </div>
+  </div>
+
+</main>
+
+<script>
+// ── Dark mode ─────────────────────────────────────────────────────
+const html = document.documentElement;
+const themeBtn = document.getElementById("theme-btn");
+const saved = localStorage.getItem("fedhealth-theme") || "light";
+html.setAttribute("data-theme", saved);
+themeBtn.textContent = saved === "dark" ? "☀" : "🌙";
+themeBtn.addEventListener("click", () => {
+  const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  themeBtn.textContent = next === "dark" ? "☀" : "🌙";
+  localStorage.setItem("fedhealth-theme", next);
+});
+
+// ── Server health ─────────────────────────────────────────────────
+const srvPill   = document.getElementById("srv-pill");
+const srvDot    = document.getElementById("srv-dot");
+const srvLabel  = document.getElementById("srv-label");
+const srvBanner = document.getElementById("server-banner");
+
+async function checkHealth() {
+  try {
+    const r = await fetch("/api/health", { cache: "no-store" });
+    const d = await r.json();
+    if (d.ok) {
+      setStatus("online", "Server Online");
+      srvBanner.style.display = "none";
+    } else {
+      setStatus("warning", "Models Missing");
+      showBanner("warning", "Server running — models not loaded.",
+        `Place the required <code>.joblib</code> and <code>feature_columns.json</code> files in the <code>models/</code> directory and restart. ${d.error || ""}`);
+    }
+  } catch {
+    setStatus("offline", "Server Offline");
+    showBanner("offline", "Cannot reach the prediction server.",
+      `Start it with <code>python app.py</code>, then open <code>http://127.0.0.1:5000</code> — do not open the HTML file directly.`);
+  }
+}
+
+function setStatus(state, label) {
+  srvPill.className = "srv-pill " + state;
+  srvDot.className  = "srv-dot" + (state === "online" ? " pulse" : "");
+  srvLabel.textContent = label;
+}
+
+function showBanner(type, title, detail) {
+  srvBanner.style.display = "block";
+  srvBanner.innerHTML = `<div class="server-banner-inner ${type}">
+    <span class="sb-icon">${type === "offline" ? "🔌" : "⚙"}</span>
+    <div class="sb-body"><strong>${title}</strong>${detail}</div>
+  </div>`;
+}
+
+checkHealth();
+setInterval(checkHealth, 6000);
+
+// ── Prediction ────────────────────────────────────────────────────
+const $ = id => document.getElementById(id);
+const val  = id => $(id).value;
+const bool = id => $(id).checked ? 1 : 0;
+const fmt  = (n, d=2) => n.toLocaleString("en-US", { minimumFractionDigits:d, maximumFractionDigits:d });
+
+async function runPrediction() {
+  const pBtn   = $("predict-btn");
+  const errBox = $("error-msg");
+  errBox.style.display = "none";
+  pBtn.classList.add("loading");
+  pBtn.disabled = true;
+
+  const payload = {
+    age:                     parseFloat(val("age")),
+    gender:                  val("gender"),
+    area:                    val("area"),
+    bmi:                     parseFloat(val("bmi")),
+    blood_pressure:          parseFloat(val("blood_pressure")),
+    diabetes:                bool("diabetes"),
+    physical_activity_level: val("physical_activity_level"),
+    smoker:                  val("smoker"),
+    annual_premium:          parseFloat(val("annual_premium")),
+    monthly_premium:         parseFloat(val("monthly_premium")),
+    network_tier:            val("network_tier"),
+    deductible:              parseFloat(val("deductible")),
+    ldl:                     parseFloat(val("ldl")),
+    hbalc:                   parseFloat(val("hbalc")),
+    income:                  parseFloat(val("income")),
+    copd:                    bool("copd"),
+    hypertension:            bool("hypertension"),
+    mental_health:           bool("mental_health"),
+    arthritis:               bool("arthritis"),
+    asthma:                  bool("asthma"),
+    chronic_count:           parseInt(val("chronic_count")),
+  };
+
+  try {
+    const r = await fetch("/api/predict", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const d = await r.json();
+    if (!r.ok || d.error) {
+      showError(d.error || "Prediction failed. Please try again.");
+    } else {
+      renderResults(d);
+    }
+  } catch {
+    showError("Cannot reach the server. Run <code>python app.py</code> and open <code>http://127.0.0.1:5000</code>.");
+  } finally {
+    pBtn.classList.remove("loading");
+    pBtn.disabled = false;
+  }
+}
+
+function showError(msg) {
+  const box = $("error-msg");
+  box.innerHTML = "⚠ &nbsp;" + msg;
+  box.style.display = "block";
+}
+
+function renderResults(d) {
+  const section = $("results-section");
+  section.style.display = "block";
+
+  $("res-cost").textContent = "$" + fmt(d.annual_medical_cost);
+
+  const rs = d.risk_score;
+  $("res-risk").textContent = fmt(rs, 4);
+  setTimeout(() => {
+    $("risk-bar").style.width = Math.min(Math.max(rs * 100, 0), 100) + "%";
+  }, 120);
+
+  const isHigh = d.is_high_risk === 1;
+  const prob   = (d.high_risk_probability * 100).toFixed(1);
+  $("rc-hi-card").className    = "result-card " + (isHigh ? "rc-hi" : "rc-lo");
+  $("res-hi").textContent      = isHigh ? "HIGH RISK" : "LOW RISK";
+  $("res-hi-prob").textContent = `Ensemble probability: ${prob}%`;
+  $("res-hi-badge").innerHTML  = `
+    <div class="hr-badge ${isHigh ? "hr-badge-high" : "hr-badge-low"}">
+      ${isHigh ? "⚠ Clinical Review Advised" : "✓ Standard Risk Profile"}
+    </div>`;
+
+  section.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+</script>
+
+</body>
+</html>
